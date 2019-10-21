@@ -1,6 +1,5 @@
 package com.leonsmoke.modules.serialization;
 
-import com.leonsmoke.Bean;
 import com.leonsmoke.services.ClassParser;
 
 import java.lang.reflect.Field;
@@ -81,7 +80,7 @@ public class DeserializerModule {
             endIndex = sb.indexOf(VALUE_CLOSE,endIndex+1);
         }
         progress=endIndex;
-        return sb.substring(startIndex+7,endIndex);
+        return sb.substring(startIndex+VALUE_OPEN.length(),endIndex);
     }
 
     /**
@@ -101,7 +100,7 @@ public class DeserializerModule {
             }
             endIndex = sb.indexOf(VALUE_CLOSE,endIndex+1);
         }
-        return sb.substring(start+7,endIndex);
+        return sb.substring(start+VALUE_OPEN.length(),endIndex);
     }
 
     /**
@@ -157,7 +156,7 @@ public class DeserializerModule {
      */
     private Object parseValue(StringBuilder encoded, String name, Class type) throws Exception{
         Object fieldWithValue = null;
-        if (Bean.class.isAssignableFrom(type)){
+        if (ClassParser.checkClass(type).equals("bean")){
             StringBuilder beanData = new StringBuilder(findBeanData(encoded,name));
             int tempProgress = progress;
             if (beanData.toString().equals("null")){
@@ -194,7 +193,7 @@ public class DeserializerModule {
         //progress=0;
         Collection collection= null;
         if (type.toString().contains("Set")){
-            collection = new HashSet<Bean>();
+            collection = new HashSet<Object>();
         }
         if (type.toString().contains("List")){
             collection = new ArrayList();
@@ -225,10 +224,10 @@ public class DeserializerModule {
          * TODO не забыть подправить и изменить
          */
         while (indexStart!=-1){
-            int tempIndex = sb.indexOf(TYPE_OPEN,indexStart)+6;
+            int tempIndex = sb.indexOf(TYPE_OPEN,indexStart)+TYPE_OPEN.length();
             String type = sb.substring(tempIndex,sb.indexOf(TYPE_CLOSE,tempIndex));
             type = type.replace("class ","");
-            tempIndex = sb.indexOf(VALUE_OPEN,tempIndex)+7;
+            tempIndex = sb.indexOf(VALUE_OPEN,tempIndex)+VALUE_OPEN.length();
             String value = sb.substring(tempIndex,sb.indexOf(VALUE_CLOSE,tempIndex));
             Object key = ClassParser.getValue(type,value);
             if (key==null){
@@ -236,13 +235,13 @@ public class DeserializerModule {
                 StringBuilder beanData = new StringBuilder(findBeanData(new StringBuilder(value),null));
                 key = deserializeBean(beanData);
             }
-            tempIndex = sb.indexOf(SECONDKEY_OPEN,tempIndex)+11;
+            tempIndex = sb.indexOf(SECONDKEY_OPEN,tempIndex)+SECONDKEY_OPEN.length();
 
-            tempIndex = sb.indexOf(TYPE_OPEN,tempIndex)+6;
+            tempIndex = sb.indexOf(TYPE_OPEN,tempIndex)+TYPE_OPEN.length();
             type = sb.substring(tempIndex,sb.indexOf(TYPE_CLOSE,tempIndex));
             type = type.replace("class ","");
-            tempIndex = sb.indexOf(VALUE_OPEN,tempIndex)+7;
-            value = sb.substring(tempIndex,sb.indexOf(VALUE_CLOSE,tempIndex)+8);
+            tempIndex = sb.indexOf(VALUE_OPEN,tempIndex)+VALUE_OPEN.length();
+            value = sb.substring(tempIndex,sb.indexOf(VALUE_CLOSE,tempIndex)+VALUE_CLOSE.length());
             Object secondKey = ClassParser.getValue(type,value);
             if (secondKey==null){
                 value = VALUE_OPEN+sb.substring(tempIndex);
@@ -269,13 +268,13 @@ public class DeserializerModule {
             indexFirst = encoded.indexOf(name,indexFirst+1);
         } while (progress>indexFirst);
         int indexEnd = encoded.indexOf(VALUE_CLOSE,indexFirst);
-        indexFirst = encoded.indexOf(VALUE_OPEN,indexFirst)+7;
+        indexFirst = encoded.indexOf(VALUE_OPEN,indexFirst)+VALUE_OPEN.length();
         progress=indexFirst;
         return encoded.substring(indexFirst,indexEnd);
     }
 
     private String encodeClassName(StringBuilder encoded){
-        int indexStart = encoded.indexOf(CLASSNAME_OPEN)+11;
+        int indexStart = encoded.indexOf(CLASSNAME_OPEN)+CLASSNAME_OPEN.length();
         return encoded.substring(indexStart,encoded.indexOf(CLASSNAME_CLOSE));
     }
 

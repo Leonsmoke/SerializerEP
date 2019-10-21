@@ -9,6 +9,11 @@ import java.util.Map;
 
 public class ClassParser {
 
+    /**
+     * Статический метод определяющий тип заданного класса
+     * @param clazz класс для определения типа
+     * @return строковое представение типа
+     */
     public static String checkClass(Class clazz){
         switch (clazz.toString()){
             case "int":

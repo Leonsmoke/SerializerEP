@@ -2,6 +2,12 @@ package com.leonsmoke;
 
 import com.leonsmoke.modules.Serializator;
 
+/**
+ * Author: Melnikov Dmitrii
+ *
+ * Сериализатор Java Beans, на вход получает объект класса, в полях которого могут быть:
+ * Все примитивные типы и ссылочные оболочки над ними, BigDecimal, Instant, другие объекты Bean, коллекции с этими объектами
+ */
 public class Encoder implements SuperEncoder {
 
     /**

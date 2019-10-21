@@ -1,6 +1,5 @@
 package com.leonsmoke.modules.serialization;
 
-import com.leonsmoke.Bean;
 import com.leonsmoke.services.ClassParser;
 
 import java.lang.reflect.Field;
@@ -17,7 +16,7 @@ import static com.leonsmoke.constants.Constants.*;
  */
 public class SerializerModule {
 
-    List<Bean> innerList = new ArrayList<>();
+    List<Object> innerList = new ArrayList<>();
 
     /**
      * Метод старта пройесса сериализации
@@ -38,14 +37,14 @@ public class SerializerModule {
      * @throws Exception
      */
     private String serializeBean(Object anyObject) throws Exception{
-        innerList.add((Bean)anyObject);
+        innerList.add(anyObject);
         StringBuilder sb = new StringBuilder();
         sb.append(CLASS_OPEN).append(CLASSNAME_OPEN);
         sb.append(anyObject.getClass().getName());
         sb.append(CLASSNAME_CLOSE);
         sb.append(serialize(anyObject));
         sb.append(CLASS_CLOSE);
-        innerList.remove((Bean)anyObject);
+        innerList.remove(anyObject);
         return sb.toString();
     }
 
@@ -101,7 +100,7 @@ public class SerializerModule {
         switch (type){
             case "bean":
                 if (value!=null){
-                    if (innerList.contains((Bean)value)){
+                    if (innerList.contains(value)){
                         throw new Exception("Error. Looping!");
                     } else {
                         return serializeBean(value);
@@ -140,7 +139,7 @@ public class SerializerModule {
     public String collectionSerialize(Object object) throws Exception {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(COLLECTION_OPEN);
-        Collection<Bean> newCol = (Collection)object;
+        Collection<Object> newCol = (Collection)object;
         newCol.forEach((beans -> {
             stringBuilder.append(ELEMENT_OPEN);
             try {
