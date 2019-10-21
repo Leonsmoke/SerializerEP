@@ -13,7 +13,7 @@ public class Encoder implements SuperEncoder {
     /**
      * При вызове метода начнется сериализация объекта
      * @param anyBean объект для сериализации
-     * @return
+     * @return сериализованный объект, в виде массива байтов
      */
     @Override
     public byte[] serialize(Object anyBean) {
@@ -24,7 +24,7 @@ public class Encoder implements SuperEncoder {
     /**
      * При вызове метода начнется десериализация объекта
      * @param data сериализованный объект
-     * @return
+     * @return десериализованный объект
      */
     @Override
     public Object deserialize(byte[] data) {
