@@ -1,7 +1,7 @@
-package com.leonsmoke;
+package com.leonsmoke.modules;
 
-import com.leonsmoke.modules.DeserializerModule;
-import com.leonsmoke.modules.SerializerModule;
+import com.leonsmoke.modules.serialization.DeserializerModule;
+import com.leonsmoke.modules.serialization.SerializerModule;
 
 public class Serializator {
 

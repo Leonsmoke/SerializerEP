@@ -1,16 +1,16 @@
-package com.leonsmoke.modules;
+package com.leonsmoke.modules.serialization;
 
 import com.leonsmoke.Bean;
 import com.leonsmoke.services.ClassParser;
 
-import java.beans.Beans;
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import static com.leonsmoke.constants.Constants.*;
 
 /**
  * Модуль сериализации объекта, представлении его в виде массива байтов
@@ -40,11 +40,11 @@ public class SerializerModule {
     private String serializeBean(Object anyObject) throws Exception{
         innerList.add((Bean)anyObject);
         StringBuilder sb = new StringBuilder();
-        sb.append("<class>").append("<className>");
+        sb.append(CLASS_OPEN).append(CLASSNAME_OPEN);
         sb.append(anyObject.getClass().getName());
-        sb.append("</className>");
+        sb.append(CLASSNAME_CLOSE);
         sb.append(serialize(anyObject));
-        sb.append("</class>");
+        sb.append(CLASS_CLOSE);
         innerList.remove((Bean)anyObject);
         return sb.toString();
     }
@@ -58,12 +58,12 @@ public class SerializerModule {
     private String serialize(Object object) throws Exception {
         StringBuilder sb = new StringBuilder();
         Field[] fields = object.getClass().getDeclaredFields();
-        sb.append("<classfields>");
+        sb.append(CLASSFIELDS_OPEN);
         for (Field f: fields
         ) {
             sb.append(serializeField(f,object));
         }
-        sb.append("</classfields>");
+        sb.append(CLASSFIELDS_CLOSE);
         return sb.toString();
     }
 
@@ -76,17 +76,17 @@ public class SerializerModule {
      */
     private String serializeField(Field field, Object mainObject) throws Exception {
         StringBuilder sb = new StringBuilder();
-        sb.append("<field>");
+        sb.append(FIELD_OPEN);
         field.setAccessible(true);
-        sb.append("<name>").append(field.getName()).append("</name>");
-        sb.append("<type>").append(field.getType().toString()).append("</type>");
-        sb.append("<value>");
+        sb.append(NAME_OPEN).append(field.getName()).append(NAME_CLOSE);
+        sb.append(TYPE_OPEN).append(field.getType().toString()).append(TYPE_CLOSE);
+        sb.append(VALUE_OPEN);
         Object value = null;
         String type = ClassParser.checkClass(field.getType());
         value = field.get(mainObject);
         sb.append(getField(type,value));
-        sb.append("</value>");
-        sb.append("</field>");
+        sb.append(VALUE_CLOSE);
+        sb.append(FIELD_CLOSE);
         return sb.toString();
     }
 
@@ -139,18 +139,18 @@ public class SerializerModule {
      */
     public String collectionSerialize(Object object) throws Exception {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("<collection>");
+        stringBuilder.append(COLLECTION_OPEN);
         Collection<Bean> newCol = (Collection)object;
         newCol.forEach((beans -> {
-            stringBuilder.append("<element>");
+            stringBuilder.append(ELEMENT_OPEN);
             try {
                 stringBuilder.append(start(beans));
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            stringBuilder.append("</element>");
+            stringBuilder.append(ELEMENT_CLOSE);
         }));
-        stringBuilder.append("</collection>");
+        stringBuilder.append(COLLECTION_CLOSE);
         return stringBuilder.toString();
     }
 
@@ -163,36 +163,36 @@ public class SerializerModule {
     public String mapSerialize(Map object){
         StringBuilder stringBuilder = new StringBuilder();
 
-        stringBuilder.append("<collection>");
+        stringBuilder.append(COLLECTION_OPEN);
         object.forEach((key,value)->{
-            stringBuilder.append("<element>");
-            stringBuilder.append("<key>");
+            stringBuilder.append(ELEMENT_OPEN);
+            stringBuilder.append(KEY_OPEN);
             try {
-                stringBuilder.append("<type>");
+                stringBuilder.append(TYPE_OPEN);
                 stringBuilder.append(key.getClass());
-                stringBuilder.append("</type>");
+                stringBuilder.append(TYPE_CLOSE);
                 String type = ClassParser.checkClass(key.getClass());
-                stringBuilder.append("<value>").append(getField(type,key)).append("</value>");
+                stringBuilder.append(VALUE_OPEN).append(getField(type,key)).append(VALUE_CLOSE);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            stringBuilder.append("</key>");
-            stringBuilder.append("<secondkey>");
+            stringBuilder.append(KEY_CLOSE);
+            stringBuilder.append(SECONDKEY_OPEN);
             try {
-                stringBuilder.append("<type>");
+                stringBuilder.append(TYPE_OPEN);
                 stringBuilder.append(value.getClass());
-                stringBuilder.append("</type>");
+                stringBuilder.append(TYPE_CLOSE);
                 String type = ClassParser.checkClass(value.getClass());
-                stringBuilder.append("<value>");
+                stringBuilder.append(VALUE_OPEN);
                 stringBuilder.append(getField(type,value));
-                stringBuilder.append("</value>");
+                stringBuilder.append(VALUE_CLOSE);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            stringBuilder.append("</secondkey>");
-            stringBuilder.append("</element>");
+            stringBuilder.append(SECONDKEY_CLOSE);
+            stringBuilder.append(ELEMENT_CLOSE);
         });
-        stringBuilder.append("</collection>");
+        stringBuilder.append(COLLECTION_CLOSE);
         return stringBuilder.toString();
     }
 

@@ -1,6 +1,6 @@
 package com.leonsmoke;
 
-import java.io.Serializable;
+import com.leonsmoke.modules.Serializator;
 
 public class Encoder implements SuperEncoder {
 

@@ -1,10 +1,11 @@
-package com.leonsmoke.modules;
+package com.leonsmoke.modules.serialization;
 
 import com.leonsmoke.Bean;
 import com.leonsmoke.services.ClassParser;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import static com.leonsmoke.constants.Constants.*;
 
 /**
  * Модуль, десериализовывающиймассив байтов в массив
@@ -44,15 +45,15 @@ public class DeserializerModule {
      * @return строковое представление полейф класса
      */
     private String findClassfields(StringBuilder sb){
-        int startIndex = sb.indexOf("<classfields>");
-        int endIndex = sb.indexOf("</classfields>");
+        int startIndex = sb.indexOf(CLASSFIELDS_OPEN);
+        int endIndex = sb.indexOf(CLASSFIELDS_CLOSE);
         int seeker = startIndex;
         while(true){
-            seeker=sb.indexOf("<classfields>",seeker+1);
+            seeker=sb.indexOf(CLASSFIELDS_OPEN,seeker+1);
             if (seeker==-1 || seeker>endIndex){
                 break;
             }
-            endIndex = sb.indexOf("</classfields>",endIndex+1);
+            endIndex = sb.indexOf(CLASSFIELDS_CLOSE,endIndex+1);
         }
         return sb.substring(startIndex+13,endIndex);
     }
@@ -67,17 +68,17 @@ public class DeserializerModule {
         int startIndex = 0;
         do {
             if (name==null) break;
-            startIndex = sb.indexOf("<name>"+name,startIndex+1);
+            startIndex = sb.indexOf(NAME_OPEN+name,startIndex+1);
         } while (progress>startIndex);
-        startIndex = sb.indexOf("<value>",startIndex);
-        int endIndex = sb.indexOf("</value>",startIndex);
+        startIndex = sb.indexOf(VALUE_OPEN,startIndex);
+        int endIndex = sb.indexOf(VALUE_CLOSE,startIndex);
         int seeker = startIndex;
         while(true){
-            seeker=sb.indexOf("<value>",seeker+1);
+            seeker=sb.indexOf(VALUE_OPEN,seeker+1);
             if (seeker==-1 || seeker>endIndex){
                 break;
             }
-            endIndex = sb.indexOf("</value>",endIndex+1);
+            endIndex = sb.indexOf(VALUE_CLOSE,endIndex+1);
         }
         progress=endIndex;
         return sb.substring(startIndex+7,endIndex);
@@ -90,15 +91,15 @@ public class DeserializerModule {
      * @return строка, со значениями
      */
     private String findValue(StringBuilder sb, int start){
-        start = sb.indexOf("<value>",start);
-        int endIndex = sb.indexOf("</value>",start);
+        start = sb.indexOf(VALUE_OPEN,start);
+        int endIndex = sb.indexOf(VALUE_CLOSE,start);
         int seeker = start;
         while(true){
-            seeker=sb.indexOf("<value>",seeker+1);
+            seeker=sb.indexOf(VALUE_OPEN,seeker+1);
             if (seeker==-1 || seeker>endIndex){
                 break;
             }
-            endIndex = sb.indexOf("</value>",endIndex+1);
+            endIndex = sb.indexOf(VALUE_CLOSE,endIndex+1);
         }
         return sb.substring(start+7,endIndex);
     }
@@ -112,22 +113,22 @@ public class DeserializerModule {
     private String findCollectionData(StringBuilder sb, String name){
         int startIndex = progress;
         do {
-            startIndex = sb.indexOf("<name>"+name+"</name>",startIndex+1);
+            startIndex = sb.indexOf(NAME_OPEN+name+NAME_CLOSE,startIndex+1);
             if (startIndex==-1) return "null";
         } while (progress>startIndex);
         int tempProgress = progress;
         sb = new StringBuilder(findValue(sb,startIndex));
-        startIndex = sb.indexOf("<collection>");
+        startIndex = sb.indexOf(COLLECTION_OPEN);
         if (startIndex==-1) return "null";
-        int endIndex = sb.indexOf("</collection>",startIndex);
+        int endIndex = sb.indexOf(COLLECTION_CLOSE,startIndex);
         progress=endIndex;
         int seeker = startIndex;
         while(true){
-            seeker=sb.indexOf("<collection>",seeker+1);
+            seeker=sb.indexOf(COLLECTION_OPEN,seeker+1);
             if (seeker==-1 || seeker>endIndex){
                 break;
             }
-            endIndex = sb.indexOf("</collection>",endIndex+1);
+            endIndex = sb.indexOf(COLLECTION_CLOSE,endIndex+1);
         }
         progress=tempProgress+endIndex;
         return sb.substring(startIndex+12,endIndex);
@@ -198,13 +199,13 @@ public class DeserializerModule {
         if (type.toString().contains("List")){
             collection = new ArrayList();
         }
-        int indexStart = sb.indexOf("<class>");
-        int indexEnd = sb.indexOf("</class>",indexStart);
+        int indexStart = sb.indexOf(CLASS_OPEN);
+        int indexEnd = sb.indexOf(CLASS_CLOSE,indexStart);
         while (indexStart!=-1){
             Object element = deserializeBean(new StringBuilder(sb.substring(indexStart,indexEnd)));
             collection.add(element);
-            indexStart = sb.indexOf("<class>",indexStart+1);
-            indexEnd = sb.indexOf("</class>",indexStart+1);
+            indexStart = sb.indexOf(CLASS_OPEN,indexStart+1);
+            indexEnd = sb.indexOf(CLASS_CLOSE,indexStart+1);
         }
         return collection;
     }
@@ -218,38 +219,38 @@ public class DeserializerModule {
     private Object deserializeMap(StringBuilder sb) throws Exception{
         //progress=0;
         Map mapa = new HashMap();
-        int indexStart = sb.indexOf("<key>");
+        int indexStart = sb.indexOf(KEY_OPEN);
 
         /**
          * TODO не забыть подправить и изменить
          */
         while (indexStart!=-1){
-            int tempIndex = sb.indexOf("<type>",indexStart)+6;
-            String type = sb.substring(tempIndex,sb.indexOf("</type>",tempIndex));
+            int tempIndex = sb.indexOf(TYPE_OPEN,indexStart)+6;
+            String type = sb.substring(tempIndex,sb.indexOf(TYPE_CLOSE,tempIndex));
             type = type.replace("class ","");
-            tempIndex = sb.indexOf("<value>",tempIndex)+7;
-            String value = sb.substring(tempIndex,sb.indexOf("</value>",tempIndex));
+            tempIndex = sb.indexOf(VALUE_OPEN,tempIndex)+7;
+            String value = sb.substring(tempIndex,sb.indexOf(VALUE_CLOSE,tempIndex));
             Object key = ClassParser.getValue(type,value);
             if (key==null){
-                value = "<value>"+sb.substring(tempIndex);
+                value = VALUE_OPEN+sb.substring(tempIndex);
                 StringBuilder beanData = new StringBuilder(findBeanData(new StringBuilder(value),null));
                 key = deserializeBean(beanData);
             }
-            tempIndex = sb.indexOf("<secondkey>",tempIndex)+11;
+            tempIndex = sb.indexOf(SECONDKEY_OPEN,tempIndex)+11;
 
-            tempIndex = sb.indexOf("<type>",tempIndex)+6;
-            type = sb.substring(tempIndex,sb.indexOf("</type>",tempIndex));
+            tempIndex = sb.indexOf(TYPE_OPEN,tempIndex)+6;
+            type = sb.substring(tempIndex,sb.indexOf(TYPE_CLOSE,tempIndex));
             type = type.replace("class ","");
-            tempIndex = sb.indexOf("<value>",tempIndex)+7;
-            value = sb.substring(tempIndex,sb.indexOf("</value>",tempIndex)+8);
+            tempIndex = sb.indexOf(VALUE_OPEN,tempIndex)+7;
+            value = sb.substring(tempIndex,sb.indexOf(VALUE_CLOSE,tempIndex)+8);
             Object secondKey = ClassParser.getValue(type,value);
             if (secondKey==null){
-                value = "<value>"+sb.substring(tempIndex);
+                value = VALUE_OPEN+sb.substring(tempIndex);
                 StringBuilder beanData = new StringBuilder(findBeanData(new StringBuilder(value),null));
                 secondKey = deserializeBean(beanData);
             }
             mapa.put(key,secondKey);
-            indexStart = sb.indexOf("<key>",indexStart+1);
+            indexStart = sb.indexOf(KEY_OPEN,indexStart+1);
         }
         return mapa;
     }
@@ -267,15 +268,15 @@ public class DeserializerModule {
         do {
             indexFirst = encoded.indexOf(name,indexFirst+1);
         } while (progress>indexFirst);
-        int indexEnd = encoded.indexOf("</value>",indexFirst);
-        indexFirst = encoded.indexOf("<value>",indexFirst)+7;
+        int indexEnd = encoded.indexOf(VALUE_CLOSE,indexFirst);
+        indexFirst = encoded.indexOf(VALUE_OPEN,indexFirst)+7;
         progress=indexFirst;
         return encoded.substring(indexFirst,indexEnd);
     }
 
     private String encodeClassName(StringBuilder encoded){
-        int indexStart = encoded.indexOf("<className>")+11;
-        return encoded.substring(indexStart,encoded.indexOf("</className>"));
+        int indexStart = encoded.indexOf(CLASSNAME_OPEN)+11;
+        return encoded.substring(indexStart,encoded.indexOf(CLASSNAME_CLOSE));
     }
 
 }
