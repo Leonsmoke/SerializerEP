@@ -180,7 +180,15 @@ public class DeserializerModule {
             fieldWithValue = ClassParser.getValue(type.toString(),value);
         }
         return fieldWithValue;
+
     }
+
+    private Object parseElement(StringBuilder sb) throws Exception{
+        String elemType = sb.substring(sb.indexOf(TYPE_OPEN)+TYPE_OPEN.length(),sb.indexOf(TYPE_CLOSE));
+        String value = sb.substring(sb.indexOf(TYPE_CLOSE)+TYPE_CLOSE.length());
+        return ClassParser.getValue(elemType,value);
+    }
+
 
     /**
      * Метод десериализации коллекции
@@ -198,13 +206,14 @@ public class DeserializerModule {
         if (type.toString().contains("List")){
             collection = new ArrayList();
         }
-        int indexStart = sb.indexOf(CLASS_OPEN);
-        int indexEnd = sb.indexOf(CLASS_CLOSE,indexStart);
+        int indexStart = sb.indexOf(ELEMENT_OPEN);
+        int indexEnd = sb.indexOf(ELEMENT_CLOSE,indexStart);
         while (indexStart!=-1){
-            Object element = deserializeBean(new StringBuilder(sb.substring(indexStart,indexEnd)));
+            Object element = parseElement(new StringBuilder(sb.substring(indexStart,indexEnd)));
+            //Object element = deserializeBean(new StringBuilder(sb.substring(indexStart,indexEnd)));
             collection.add(element);
-            indexStart = sb.indexOf(CLASS_OPEN,indexStart+1);
-            indexEnd = sb.indexOf(CLASS_CLOSE,indexStart+1);
+            indexStart = sb.indexOf(ELEMENT_OPEN,indexStart+1);
+            indexEnd = sb.indexOf(ELEMENT_CLOSE,indexStart+1);
         }
         return collection;
     }
@@ -226,7 +235,6 @@ public class DeserializerModule {
         while (indexStart!=-1){
             int tempIndex = sb.indexOf(TYPE_OPEN,indexStart)+TYPE_OPEN.length();
             String type = sb.substring(tempIndex,sb.indexOf(TYPE_CLOSE,tempIndex));
-            type = type.replace("class ","");
             tempIndex = sb.indexOf(VALUE_OPEN,tempIndex)+VALUE_OPEN.length();
             String value = sb.substring(tempIndex,sb.indexOf(VALUE_CLOSE,tempIndex));
             Object key = ClassParser.getValue(type,value);
@@ -239,7 +247,6 @@ public class DeserializerModule {
 
             tempIndex = sb.indexOf(TYPE_OPEN,tempIndex)+TYPE_OPEN.length();
             type = sb.substring(tempIndex,sb.indexOf(TYPE_CLOSE,tempIndex));
-            type = type.replace("class ","");
             tempIndex = sb.indexOf(VALUE_OPEN,tempIndex)+VALUE_OPEN.length();
             value = sb.substring(tempIndex,sb.indexOf(VALUE_CLOSE,tempIndex)+VALUE_CLOSE.length());
             Object secondKey = ClassParser.getValue(type,value);

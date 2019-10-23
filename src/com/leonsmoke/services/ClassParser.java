@@ -24,6 +24,7 @@ public class ClassParser {
             case "short":
             case "long":
             case "char":
+            case "class java.lang.Boolean":
                 return "primitive";
             case "interface java.util.Set":
             case "interface java.util.List":

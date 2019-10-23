@@ -130,6 +130,42 @@ public class SerializerModule {
         return null;
     }
 
+    private String serializeElement(Object element) throws Exception{
+        StringBuilder sb = new StringBuilder();
+        String type = ClassParser.checkClass(element.getClass());
+        switch (type){
+            case "bean":
+                if (element!=null){
+                    if (innerList.contains(element)){
+                        throw new Exception("Error. Looping!");
+                    } else {
+                        return serializeBean(element);
+                    }
+                }
+                break;
+            case "collection":
+                if (element!=null){
+                    return (collectionSerialize(element));
+                }
+                break;
+            case "map":
+                if (element!=null){
+                    return(mapSerialize((Map)element));
+                }
+                break;
+            case "parse":
+            case "primitive":
+            case "number":
+            case "string":
+            case "none":
+                if (element!=null){
+                    return(element.toString());
+                }
+
+        }
+        return null;
+    }
+
     /**
      * Сериализует коллекцию(list,set)
      * @param object сама коллекция
@@ -143,7 +179,9 @@ public class SerializerModule {
         newCol.forEach((beans -> {
             stringBuilder.append(ELEMENT_OPEN);
             try {
-                stringBuilder.append(start(beans));
+                //stringBuilder.append(start(beans));
+                stringBuilder.append(TYPE_OPEN).append(beans.getClass().toString()).append(TYPE_CLOSE);
+                stringBuilder.append(serializeElement(beans));
             } catch (Exception e) {
                 e.printStackTrace();
             }
