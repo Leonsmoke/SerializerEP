@@ -89,7 +89,7 @@ public class DeserializerModule {
      * @param start начальная координата поиска
      * @return строка, со значениями
      */
-    private String findValue(StringBuilder sb, int start){
+    private String findValue(StringBuilder sb, int start, boolean changeProgress){
         start = sb.indexOf(VALUE_OPEN,start);
         int endIndex = sb.indexOf(VALUE_CLOSE,start);
         int seeker = start;
@@ -99,6 +99,9 @@ public class DeserializerModule {
                 break;
             }
             endIndex = sb.indexOf(VALUE_CLOSE,endIndex+1);
+        }
+        if (changeProgress){
+            progress=endIndex;
         }
         return sb.substring(start+VALUE_OPEN.length(),endIndex);
     }
@@ -116,7 +119,7 @@ public class DeserializerModule {
             if (startIndex==-1) return "null";
         } while (progress>startIndex);
         int tempProgress = progress;
-        sb = new StringBuilder(findValue(sb,startIndex));
+        sb = new StringBuilder(findValue(sb,startIndex,false));
         startIndex = sb.indexOf(COLLECTION_OPEN);
         if (startIndex==-1) return "null";
         int endIndex = sb.indexOf(COLLECTION_CLOSE,startIndex);
@@ -186,9 +189,36 @@ public class DeserializerModule {
     private Object parseElement(StringBuilder sb) throws Exception{
         String elemType = sb.substring(sb.indexOf(TYPE_OPEN)+TYPE_OPEN.length(),sb.indexOf(TYPE_CLOSE));
         String value = sb.substring(sb.indexOf(TYPE_CLOSE)+TYPE_CLOSE.length());
-        return ClassParser.getValue(elemType,value);
+        Object element = ClassParser.getValue(elemType,value);
+        if (element==null && ClassParser.checkClass(Class.forName(elemType.replace("class ",""))).equals("bean")){
+            int tempProgress = progress;
+            element = deserializeBean(new StringBuilder(value));
+            progress = tempProgress;
+        }
+        return element;
     }
 
+
+    private String findElement(StringBuilder sb){
+        int startIndex = progress-1;
+        do {
+            startIndex = sb.indexOf(ELEMENT_OPEN,startIndex+1);
+            if (startIndex==-1) return "null";
+        } while (progress>startIndex);
+        int tempProgress = progress;
+        int endIndex = sb.indexOf(ELEMENT_CLOSE,startIndex);
+        progress=endIndex;
+        int seeker = startIndex;
+        while(true){
+            seeker=sb.indexOf(ELEMENT_OPEN,seeker+1);
+            if (seeker==-1 || seeker>endIndex){
+                break;
+            }
+            endIndex = sb.indexOf(ELEMENT_CLOSE,endIndex+1);
+        }
+        progress=endIndex;
+        return sb.substring(startIndex,endIndex);
+    }
 
     /**
      * Метод десериализации коллекции
@@ -198,7 +228,7 @@ public class DeserializerModule {
      * @throws Exception
      */
     private Object deserializeCollection(StringBuilder sb,Class type) throws Exception{
-        //progress=0;
+        progress=0;
         Collection collection= null;
         if (type.toString().contains("Set")){
             collection = new HashSet<Object>();
@@ -206,14 +236,11 @@ public class DeserializerModule {
         if (type.toString().contains("List")){
             collection = new ArrayList();
         }
-        int indexStart = sb.indexOf(ELEMENT_OPEN);
-        int indexEnd = sb.indexOf(ELEMENT_CLOSE,indexStart);
-        while (indexStart!=-1){
-            Object element = parseElement(new StringBuilder(sb.substring(indexStart,indexEnd)));
-            //Object element = deserializeBean(new StringBuilder(sb.substring(indexStart,indexEnd)));
+        String encode = findElement(sb);
+        while (!encode.equals("null")){
+            Object element = parseElement(new StringBuilder(encode));
             collection.add(element);
-            indexStart = sb.indexOf(ELEMENT_OPEN,indexStart+1);
-            indexEnd = sb.indexOf(ELEMENT_CLOSE,indexStart+1);
+            encode = findElement(sb);
         }
         return collection;
     }
@@ -225,39 +252,36 @@ public class DeserializerModule {
      * @throws Exception
      */
     private Object deserializeMap(StringBuilder sb) throws Exception{
-        //progress=0;
         Map mapa = new HashMap();
         int indexStart = sb.indexOf(KEY_OPEN);
+        int tempProgress = progress;
+        progress=0;
 
-        /**
-         * TODO не забыть подправить и изменить
-         */
         while (indexStart!=-1){
             int tempIndex = sb.indexOf(TYPE_OPEN,indexStart)+TYPE_OPEN.length();
             String type = sb.substring(tempIndex,sb.indexOf(TYPE_CLOSE,tempIndex));
+            progress=tempIndex;
             tempIndex = sb.indexOf(VALUE_OPEN,tempIndex)+VALUE_OPEN.length();
-            String value = sb.substring(tempIndex,sb.indexOf(VALUE_CLOSE,tempIndex));
+            String value = findValue(sb,progress,true);
             Object key = ClassParser.getValue(type,value);
             if (key==null){
-                value = VALUE_OPEN+sb.substring(tempIndex);
+                //value = VALUE_OPEN+sb.substring(tempIndex);
                 StringBuilder beanData = new StringBuilder(findBeanData(new StringBuilder(value),null));
                 key = deserializeBean(beanData);
             }
             tempIndex = sb.indexOf(SECONDKEY_OPEN,tempIndex)+SECONDKEY_OPEN.length();
-
             tempIndex = sb.indexOf(TYPE_OPEN,tempIndex)+TYPE_OPEN.length();
             type = sb.substring(tempIndex,sb.indexOf(TYPE_CLOSE,tempIndex));
-            tempIndex = sb.indexOf(VALUE_OPEN,tempIndex)+VALUE_OPEN.length();
-            value = sb.substring(tempIndex,sb.indexOf(VALUE_CLOSE,tempIndex)+VALUE_CLOSE.length());
+            progress=tempIndex;
+            value = findValue(sb,progress,true);
             Object secondKey = ClassParser.getValue(type,value);
             if (secondKey==null){
-                value = VALUE_OPEN+sb.substring(tempIndex);
-                StringBuilder beanData = new StringBuilder(findBeanData(new StringBuilder(value),null));
-                secondKey = deserializeBean(beanData);
+                secondKey = deserializeBean(new StringBuilder(value));
             }
             mapa.put(key,secondKey);
             indexStart = sb.indexOf(KEY_OPEN,indexStart+1);
         }
+        progress=tempProgress;
         return mapa;
     }
 

@@ -3,6 +3,7 @@ package com.leonsmoke.services;
 import java.beans.Beans;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
@@ -105,8 +106,11 @@ public class ClassParser {
             case "class java.lang.String":
                 return value;
             case "class java.math.BigDecimal":
-                Integer integer = new Integer(value);
-                return BigDecimal.valueOf(integer);
+                Long aLong = new Long(value);
+                return BigDecimal.valueOf(aLong);
+            case "class java.math.BigInteger":
+                Long aLong1 = new Long(value);
+                return BigInteger.valueOf(aLong1);
             case "class java.time.Instant":
                 if (value==null) return null;
                 return Instant.parse(value);

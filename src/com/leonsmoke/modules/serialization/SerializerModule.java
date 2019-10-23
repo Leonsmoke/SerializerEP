@@ -121,7 +121,7 @@ public class SerializerModule {
             case "primitive":
             case "number":
             case "string":
-            case "none":
+            case "instant":
                 if (value!=null){
                     return(value.toString());
                 }
